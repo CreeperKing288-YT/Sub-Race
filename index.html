@@ -60,26 +60,36 @@
                 });
 
                 const results = await Promise.all(promises);
-                
-                results.forEach(result => {
-                    if (result.items.length > 0) {
-                        const channel = result.items[0];
-                        const displayName = channel.snippet.title;
-                        const profilePicture = channel.snippet.thumbnails.default.url;
-                        const subscriberCount = channel.statistics.subscriberCount;
-                        const channelLink = `https://www.youtube.com/channel/${channel.id}`;
 
-                        const channelDiv = document.createElement('div');
-                        channelDiv.className = 'channel';
-                        channelDiv.innerHTML = `
-                            <img src="${profilePicture}" alt="${displayName}">
-                            <div class="channel-info">
-                                <a href="${channelLink}" target="_blank">${displayName}</a>
-                                <p>Subscribers: ${subscriberCount}</p>
-                            </div>
-                        `;
-                        leaderboardDiv.appendChild(channelDiv);
-                    }
+                // Create an array to hold channel data
+                const channels = results
+                    .filter(result => result.items.length > 0) // Filter out channels that couldn't be found
+                    .map(result => {
+                        const channel = result.items[0];
+                        return {
+                            id: channel.id,
+                            displayName: channel.snippet.title,
+                            profilePicture: channel.snippet.thumbnails.default.url,
+                            subscriberCount: parseInt(channel.statistics.subscriberCount, 10), // Convert to integer
+                        };
+                    });
+
+                // Sort channels by subscriber count (descending)
+                channels.sort((a, b) => b.subscriberCount - a.subscriberCount);
+
+                // Populate the leaderboard with sorted channel data
+                channels.forEach(channel => {
+                    const channelLink = `https://www.youtube.com/channel/${channel.id}`;
+                    const channelDiv = document.createElement('div');
+                    channelDiv.className = 'channel';
+                    channelDiv.innerHTML = `
+                        <img src="${channel.profilePicture}" alt="${channel.displayName}">
+                        <div class="channel-info">
+                            <a href="${channelLink}" target="_blank">${channel.displayName}</a>
+                            <p>Subscribers: ${channel.subscriberCount}</p>
+                        </div>
+                    `;
+                    leaderboardDiv.appendChild(channelDiv);
                 });
 
             } catch (error) {
