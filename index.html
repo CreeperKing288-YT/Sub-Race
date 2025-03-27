@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Channel Leaderboard</title>
-    
+
     <!-- Open Graph Meta Tags for Discord Embed -->
     <meta property="og:title" content="YouTube Sub Race">
     <meta property="og:description" content="Who Shall win :)))">
     <meta property="og:url" content="https://creeperking288-yt.github.io/Sub-Race/">
-    
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -59,35 +59,46 @@
     </div>
 
     <script>
-        const apiKey = 'AIzaSyD_anuUJa0ONaq96q69HTg0URt8Co3ppcU'; // Replace with your actual API key
-        const channelIds = ['UCA6ImCITKne3nOamkFfnYdw', 'UCwOP8Vd61x0VLppSPZq5znA', 'UC3ml01cNmrmAAtjm1S8sNVw', 'UCTkP30T8HMh_usTvM_iCJ9A', 'UCQsKvYaEUbOT0k_aaMIrvZw', 'UC4ogSr1ww28JXEG3S6YpEzw', 'UCBt7mqIfjBSeQzngcfWqceQ', 'UCKIPB5YLg0jGlpK1PA5ViZA', 'UCgwbqKtLPyqnkeba2HZpKXQ', 'UCJPzNzDxjXYh5Rj_ObMwInQ', 'UCVRD3h_x502pGw0kXF9H0WQ', 'UCUSIgAMOGbHLr-sQ10wrb2Q', 'UCTLzr1oFqe8RDrpfKj0Orig', 'UCQTKLquV1MOqMSu3AECrCyA', 'UCqAyNfpgMPcs8Ue0urhQ8oA', 'UCAIubw_X0aq1o1ARddt_Etg', 'UCjnfQuoPR3SMQnmIToG0qgA']; // Add your channel IDs here
+        const apiKey = 'YOUR_API_KEY'; // Replace with your valid API key
+        const channelIds = [
+            'UCA6ImCITKne3nOamkFfnYdw', 'UCwOP8Vd61x0VLppSPZq5znA', 'UC3ml01cNmrmAAtjm1S8sNVw',
+            'UCTkP30T8HMh_usTvM_iCJ9A', 'UCQsKvYaEUbOT0k_aaMIrvZw', 'UC4ogSr1ww28JXEG3S6YpEzw',
+            'UCBt7mqIfjBSeQzngcfWqceQ', 'UCKIPB5YLg0jGlpK1PA5ViZA', 'UCgwbqKtLPyqnkeba2HZpKXQ',
+            'UCJPzNzDxjXYh5Rj_ObMwInQ', 'UCVRD3h_x502pGw0kXF9H0WQ', 'UCUSIgAMOGbHLr-sQ10wrb2Q',
+            'UCTLzr1oFqe8RDrpfKj0Orig', 'UCQTKLquV1MOqMSu3AECrCyA', 'UCqAyNfpgMPcs8Ue0urhQ8oA',
+            'UCAIubw_X0aq1o1ARddt_Etg', 'UCjnfQuoPR3SMQnmIToG0qgA'
+        ]; // All channel IDs included
 
         async function fetchChannelData() {
             const leaderboardDiv = document.getElementById('leaderboard');
             leaderboardDiv.innerHTML = ''; // Clear previous data
 
             try {
-                const promises = channelIds.map(id => {
-                    return fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${id}&key=${apiKey}`)
-                        .then(response => response.json());
-                });
+                // Split into chunks of 10 due to YouTube API request limits
+                const chunkSize = 10;
+                const chunks = [];
+                for (let i = 0; i < channelIds.length; i += chunkSize) {
+                    chunks.push(channelIds.slice(i, i + chunkSize));
+                }
 
-                const results = await Promise.all(promises);
+                const results = await Promise.all(chunks.map(chunk =>
+                    fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${chunk.join(',')}&key=${apiKey}`)
+                        .then(response => response.json())
+                ));
 
-                // Create an array to hold channel data
                 const channels = results
-                    .filter(result => result.items.length > 0) // Filter out channels that couldn't be found
-                    .map(result => {
-                        const channel = result.items[0];
-                        const baseCount = parseInt(channel.statistics.subscriberCount, 10);
-                        // Check if the channel is your friend's, and if so add 60 subs.
-                        };
-                    });
+                    .flatMap(result => result.items || []) // Flatten results & handle missing data
+                    .map(channel => ({
+                        id: channel.id,
+                        displayName: channel.snippet.title,
+                        profilePicture: channel.snippet.thumbnails.default.url,
+                        subscriberCount: parseInt(channel.statistics.subscriberCount, 10)
+                    }));
 
-                // Sort channels by subscriber count (descending)
+                // Sort by subscribers (descending)
                 channels.sort((a, b) => b.subscriberCount - a.subscriberCount);
 
-                // Populate the leaderboard with sorted channel data
+                // Populate leaderboard
                 channels.forEach(channel => {
                     const channelLink = `https://www.youtube.com/channel/${channel.id}`;
                     const channelDiv = document.createElement('div');
@@ -96,7 +107,7 @@
                         <img src="${channel.profilePicture}" alt="${channel.displayName}">
                         <div class="channel-info">
                             <a href="${channelLink}" target="_blank">${channel.displayName}</a>
-                            <p>Subscribers: ${channel.subscriberCount}</p>
+                            <p>Subscribers: ${channel.subscriberCount.toLocaleString()}</p>
                         </div>
                     `;
                     leaderboardDiv.appendChild(channelDiv);
@@ -104,10 +115,11 @@
 
             } catch (error) {
                 console.error('Error fetching channel data:', error);
+                leaderboardDiv.innerHTML = '<p style="color: red; text-align: center;">Failed to load leaderboard. Check API key or quota.</p>';
             }
         }
 
-        // Fetch channel data when the page loads
+        // Fetch data on page load
         window.onload = fetchChannelData;
     </script>
 </body>
