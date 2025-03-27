@@ -81,12 +81,6 @@
                         const channel = result.items[0];
                         const baseCount = parseInt(channel.statistics.subscriberCount, 10);
                         // Check if the channel is your friend's, and if so add 60 subs.
-                        const offset = (channel.id === 'UCwOP8Vd61x0VLppSPZq5znA') ? 60 : 0;
-                        return {
-                            id: channel.id,
-                            displayName: channel.snippet.title,
-                            profilePicture: channel.snippet.thumbnails.default.url,
-                            subscriberCount: baseCount + offset,
                         };
                     });
 
